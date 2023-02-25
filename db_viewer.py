@@ -1,5 +1,6 @@
 import sqlite3
 import os
+import pytest
 
 
 class Singleton:
@@ -66,6 +67,26 @@ def db_fresh_start():
 ################################
 # ***** TESTS *****
 ################################
+
+@pytest.fixture
+def create_table(): # 1
+    delete_database()
+    """Initialise a file, and use sqlite3 to generate a small table we'll use for testing"""
+    connection = sqlite3.connect("aquarium.db")
+    cursor = connection.cursor()
+    print("INTIALIZING DATABASE")
+    cursor.execute("CREATE TABLE course (name TEXT, class TEXT, room_number INTEGER)")
+    cursor.execute("INSERT INTO course VALUES ('mani', 'python', 1)")
+    cursor.execute("INSERT INTO course VALUES ('ravi', 'spark', 2)")
+    connection.commit()
+
+@pytest.mark.usefixtures("create_table")
+def test_add_table(create_table):
+    
+    db = Singleton()
+    assert 2 == len(db.sql("SELECT * FROM course;"))
+
+    
 def test_is_singleton():
     delete_database()
     a = Singleton()
@@ -98,8 +119,6 @@ def test_resetting_after_db_creation():
     db_a.get_cursor()
     assert 2 == len(db_b.sql("SELECT * FROM fish;"))
 
-
-    
 if __name__=="__main__":
 
     
